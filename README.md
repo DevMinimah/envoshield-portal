@@ -1,5 +1,3 @@
-
-```markdown
 # 🛡️ EnvoShield: Secure GIS Whistleblower Portal
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white)](https://www.python.org/)
@@ -141,3 +139,6 @@ Contributions, academic inquiries, issues, and feature requests are highly welco
 ---
 *Developed with a commitment to ecological justice and digital privacy.*
 ```
+   **Copyright & License:** 
+   Copyright © 2026 Abiegbu Minimah. All rights reserved. 
+   This project is proprietary. The source code is provided for portfolio and academic demonstration purposes only.
