@@ -134,8 +134,6 @@ This project is developed as an independent research and development initiative 
 
 Contributions, academic inquiries, issues, and feature requests are highly welcome!
 
-**License:** This project is open-source and available under the [MIT License](LICENSE).
-
 ---
 *Developed with a commitment to ecological justice and digital privacy.*
 ```
