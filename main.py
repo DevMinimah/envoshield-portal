@@ -66,11 +66,9 @@ def obfuscate_coordinates(lat: float, lon: float) -> tuple[float, float]:
     Adds a random mathematical offset of up to 0.02 degrees (approx 2.2km) 
     to both latitude and longitude.
     """
-    # Generate random noise between -0.02 and +0.02
     noise_lat = random.uniform(-0.02, 0.02)
     noise_lon = random.uniform(-0.02, 0.02)
     
-    # Apply noise
     obf_lat = lat + noise_lat
     obf_lon = lon + noise_lon
     
@@ -82,14 +80,12 @@ def obfuscate_coordinates(lat: float, lon: float) -> tuple[float, float]:
 
 # --- FastAPI Application ---
 app = FastAPI(
-    title="Secure GIS Whistleblower Portal",
+    title="EnvoShield: Secure GIS Whistleblower Portal",
     description="Phase 1: Privacy-first environmental incident reporting.",
     version="1.0.0"
 )
 
 # --- CORS Configuration ---
-# Allows the frontend to communicate with the backend securely.
-# In a production environment, replace "*" with your specific frontend domain.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  
@@ -133,10 +129,17 @@ def get_reports(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     reports = db.query(DBReport).offset(skip).limit(limit).all()
     return reports
 
-# --- Serve Frontend ---
+# --- Serve Frontend & Static Assets ---
 @app.get("/")
 async def serve_frontend():
     """
     Serves the index.html file at the root URL.
     """
     return FileResponse("index.html")
+
+@app.get("/favicon.svg")
+async def serve_favicon():
+    """
+    Serves the custom EnvoShield favicon.
+    """
+    return FileResponse("favicon.svg", media_type="image/svg+xml")
