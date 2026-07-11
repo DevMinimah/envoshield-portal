@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure GIS Whistleblower Portal</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+        #sidebar {
+            width: 350px;
+            background: #ffffff;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 0.9em;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 0.95em;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #219653;
+        }
+        .status-msg {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .success { background: #d4edda; color: #155724; display: block; }
+        .error { background: #f8d7da; color: #721c24; display: block; }
+        .coord-group {
+            display: flex;
+            gap: 10px;
+        }
+        .coord-group .form-group {
+            flex: 1;
+        }
+        .privacy-notice {
+            font-size: 0.8em;
+            color: #7f8c8d;
+            margin-top: auto;
+            padding-top: 20px;
+            line-height: 1.4;
+            border-top: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Report Incident</h2>
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="reporter_name">Reporter Name (Alias)</label>
+                <input type="text" id="reporter_name" name="reporter_name" required maxlength="100" placeholder="e.g., EcoWarrior99">
+            </div>
+            <div class="form-group">
+                <label for="incident_description">Incident Description</label>
+                <textarea id="incident_description" name="incident_description" required maxlength="5000" placeholder="Describe the environmental incident in detail..."></textarea>
+            </div>
+            <div class="coord-group">
+                <div class="form-group">
+                    <label for="latitude">Latitude</label>
+                    <input type="number" step="0.0001" id="latitude" name="latitude" required min="-90" max="90" placeholder="4.8155">
+                </div>
+                <div class="form-group">
+                    <label for="longitude">Longitude</label>
+                    <input type="number" step="0.0001" id="longitude" name="longitude" required min="-180" max="180" placeholder="7.0153">
+                </div>
+            </div>
+            <button type="submit">Submit Secure Report</button>
+            <div id="statusMsg" class="status-msg"></div>
+        </form>
+        <div class="privacy-notice">
+            <strong>Privacy Notice:</strong> Your exact coordinates are automatically obfuscated by up to 2km before being saved to protect your identity.
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Initialize Map centered on Port Harcourt, Nigeria
+        const map = L.map('map').setView([4.8155, 7.0153], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 2. Define Custom Red Marker Icon
+        const redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        // 3. Function to load and display existing reports
+        async function loadReports() {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/reports');
+                if (!response.ok) throw new Error('Failed to fetch reports');
+                const reports = await response.json();
+                
+                reports.forEach(report => {
+                    addMarkerToMap(report);
+                });
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+
+        // Helper function to add a marker
+        function addMarkerToMap(data) {
+            const marker = L.marker([data.latitude, data.longitude], { icon: redIcon }).addTo(map);
+            marker.bindPopup(`<strong>Incident:</strong><br>${data.incident_description}<br><br><em>Reported by: ${data.reporter_name}</em>`);
+        }
+
+        // 4. Handle Form Submission
+        const form = document.getElementById('reportForm');
+        const statusMsg = document.getElementById('statusMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                reporter_name: document.getElementById('reporter_name').value,
+                incident_description: document.getElementById('incident_description').value,
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value)
+            };
+
+            try {
+                statusMsg.className = 'status-msg';
+                statusMsg.textContent = 'Submitting securely...';
+                statusMsg.style.display = 'block';
+
+                const response = await fetch('http://127.0.0.1:8000/api/report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    // FastAPI returns validation errors in a 'detail' array or string
+                    const errorMsg = Array.isArray(errData.detail) ? errData.detail.map(e => e.msg).join(', ') : errData.detail;
+                    throw new Error(errorMsg || 'Submission failed');
+                }
+
+                const result = await response.json();
+                statusMsg.className = 'status-msg success';
+                statusMsg.textContent = 'Report submitted! Coordinates obfuscated.';
+                
+                // Add the new marker to the map immediately with the obfuscated coords
+                addMarkerToMap(result);
+                
+                form.reset();
+            } catch (error) {
+                statusMsg.className = 'status-msg error';
+                statusMsg.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Load existing reports when the page loads
+        loadReports();
+    </script>
+</body>
+</html>

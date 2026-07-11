@@ -1,6 +1,8 @@
 import os
 import random
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
@@ -85,6 +87,19 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# --- CORS Configuration ---
+# Allows the frontend to communicate with the backend securely.
+# In a production environment, replace "*" with your specific frontend domain.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- API Endpoints ---
+
 @app.post("/api/report", response_model=ReportResponse, status_code=201)
 def create_report(report: ReportCreate, db: Session = Depends(get_db)):
     """
@@ -117,3 +132,11 @@ def get_reports(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     reports = db.query(DBReport).offset(skip).limit(limit).all()
     return reports
+
+# --- Serve Frontend ---
+@app.get("/")
+async def serve_frontend():
+    """
+    Serves the index.html file at the root URL.
+    """
+    return FileResponse("index.html")
