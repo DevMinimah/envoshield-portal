@@ -159,7 +159,8 @@
         // 3. Function to load and display existing reports
         async function loadReports() {
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/reports');
+                // ✅ FIXED: Using relative URL instead of localhost
+                const response = await fetch('/api/reports');
                 if (!response.ok) throw new Error('Failed to fetch reports');
                 const reports = await response.json();
                 
@@ -196,7 +197,8 @@
                 statusMsg.textContent = 'Submitting securely...';
                 statusMsg.style.display = 'block';
 
-                const response = await fetch('http://127.0.0.1:8000/api/report', {
+                // ✅ FIXED: Using relative URL instead of localhost
+                const response = await fetch('/api/report', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
