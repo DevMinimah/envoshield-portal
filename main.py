@@ -1,5 +1,6 @@
 import os
 import random
+import logging  # <-- ADDED for logging
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,13 @@ from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy import create_engine, Column, Integer, String, Float
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from dotenv import load_dotenv
+
+# 🚨 CHANGE A: Configure production-ready logging for Render
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("envoshield")
 
 # Load environment variables securely
 load_dotenv()
@@ -104,6 +112,10 @@ def create_report(report: ReportCreate, db: Session = Depends(get_db)):
     """
     # 1. Obfuscate coordinates BEFORE saving
     obf_lat, obf_lon = obfuscate_coordinates(report.latitude, report.longitude)
+    
+    # 🚨 CHANGE B: SECURE REAL-TIME MONITORING
+    # We ONLY log the Alias and the OBFUSCATED coordinates.
+    logger.info(f"🚨 New EnvoShield Report | Alias: {report.reporter_name} | Obfuscated Coords: {obf_lat:.4f}, {obf_lon:.4f}")
     
     # 2. Create database record with obfuscated data
     db_report = DBReport(
